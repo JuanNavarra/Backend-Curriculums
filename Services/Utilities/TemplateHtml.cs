@@ -3,6 +3,11 @@
     public static class TemplateHtml
     {
         #region Methods
+        /// <summary>
+        /// Plantilla que genera el html de confirmacion de email
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
         public static string GenerateTemplateConfirmation(string url)
         {
             string urlConfirmation = "<!DOCTYPE html><html><head>" +
@@ -20,6 +25,16 @@
                 "<p style=\"font-size: 9px;\">" + url + "<p>" +
                 "</div></body></html>";
             return urlConfirmation;
+        }
+
+        /// <summary>
+        /// Plantilla que genera el html de recuperacion de contraseña
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public static string GenerateTemplateRecoverPass(string url)
+        {
+            return url;
         }
         #endregion
     }

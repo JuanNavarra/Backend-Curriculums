@@ -15,5 +15,7 @@
         public DateTime? LastLogin { get; set; }
         public DateTime CreateDate { get; set; }
         public DateTime? UpdateDate { get; set; }
+        public string TokenChangePassword { get; set; }
+        public bool IsConfirmedChange { get; set; }
     }
 }

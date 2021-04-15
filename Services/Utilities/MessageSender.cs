@@ -8,16 +8,21 @@
     {
 
         #region Methods
+
         /// <summary>
         /// Envia un email a un usuario
         /// </summary>
         /// <param name="mailDto"></param>
+        /// <param name="emailBody"></param>
         public static void SendEmail(SendEMailDto mailDto, EmailBodyEnum emailBody)
         {
             switch (emailBody)
             {
                 case EmailBodyEnum.confirmationEmail:
                     mailDto.Body = TemplateHtml.GenerateTemplateConfirmation(mailDto.Body);
+                    break;
+                case EmailBodyEnum.recoverPassEmail:
+                    mailDto.Body = TemplateHtml.GenerateTemplateRecoverPass(mailDto.Body);
                     break;
                 default:
                     break;

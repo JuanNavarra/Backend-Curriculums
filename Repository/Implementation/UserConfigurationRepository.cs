@@ -1,12 +1,9 @@
 ﻿namespace Repository
 {
     using Dtos;
-    using Microsoft.EntityFrameworkCore;
     using Models;
     using System;
-    using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
     using System.Threading.Tasks;
 
     public class UserConfigurationRepository : IUserConfigurationRepository
@@ -90,6 +87,18 @@
             return this.repository.GetOneData<Users>(
                 g => g.TokenConfirmation.Equals(user.Token) && 
                 g.UserName.Equals(user.Username));
+        }
+
+        /// <summary>
+        /// Encuentra el usuario por email o el nombre de usuario
+        /// </summary>
+        /// <param name="recoverDto"></param>
+        /// <returns></returns>
+        public Users FindUserByUserNameEmail(RecoverPassDto recoverDto)
+        {
+            return this.repository.GetOneData<Users>(
+                g => g.Email.Equals(recoverDto.Email) ||
+                g.UserName.Equals(recoverDto.Username));
         }
         #endregion
     }

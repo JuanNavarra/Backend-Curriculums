@@ -40,5 +40,11 @@
         /// <param name="user"></param>
         /// <returns></returns>
         Users FindUserByUserNameTokenConfirm(ConfirmEmailDto user);
+        /// <summary>
+        /// Encuentra el usuario por email o el nombre de usuario
+        /// </summary>
+        /// <param name="recoverDto"></param>
+        /// <returns></returns>
+        Users FindUserByUserNameEmail(RecoverPassDto recoverDto);
     }
 }

@@ -58,6 +58,10 @@
 
                 entity.Property(e => e.UpdateDate).HasColumnName("fechaactualizacion");
 
+                entity.Property(e => e.TokenChangePassword).HasColumnName("tokencambiocontrasena");
+
+                entity.Property(e => e.IsConfirmedChange).HasColumnName("esconfirmadocambio");
+
             });
 
             OnModelCreatingPartial(modelBuilder);

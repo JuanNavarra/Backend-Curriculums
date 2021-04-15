@@ -50,11 +50,7 @@
             }
             catch (BussinessException e)
             {
-                return Json(new
-                {
-                    message = e.ReasonPhrase ?? e.Message,
-                    statusCode = e.StatusCode
-                });
+                return Problem(e.ReasonPhrase ?? e.Message, null, (int?)e.StatusCode, null, null);
             }
             catch (Exception) { throw; }
         }
@@ -76,15 +72,12 @@
                 return Ok(new
                 {
                     response = token,
+                    message = "Login exitoso"
                 });
             }
             catch (BussinessException e)
             {
-                return Json(new
-                {
-                    message = e.ReasonPhrase ?? e.Message,
-                    statusCode = e.StatusCode
-                });
+                return Problem(e.ReasonPhrase ?? e.Message, null, (int?)e.StatusCode, null, null);
             }
             catch (Exception) { throw; }
         }
@@ -94,29 +87,26 @@
         /// </summary>
         /// <param name="username"></param>
         /// <param name="token"></param>
+        /// <param name="actionProcess"></param>
         /// <returns></returns>
-        [HttpGet("account/confirmemail/{username}/{token}")]
+        [HttpGet("account/confirmemail/{username}/{token}/{actionProcess}")]
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult ConfirmEmail(string username, string token)
+        public IActionResult ConfirmEmail(string username, string token, int actionProcess)
         {
             try
             {
-                userConfiguration.ConfirmEmail(username, token);
+                userConfiguration.ConfirmEmail(username, token, (ActionProcessUserEnum)actionProcess);
                 return Ok(new
                 {
-                    response = "Confirmacion exitosa, puede logearse"
+                    response = "Confirmacion de correo exitosa"
                 });
             }
             catch (BussinessException e)
             {
-                return Json(new
-                {
-                    message = e.ReasonPhrase ?? e.Message,
-                    statusCode = e.StatusCode
-                });
+                return Problem(e.ReasonPhrase ?? e.Message, null, (int?)e.StatusCode, null, null);
             }
             catch (Exception) { throw; }
         }
@@ -142,18 +132,61 @@
             }
             catch (BussinessException e)
             {
-                return Json(new
-                {
-                    message = e.ReasonPhrase ?? e.Message,
-                    statusCode = e.StatusCode
-                });
+                return Problem(e.ReasonPhrase ?? e.Message, null, (int?)e.StatusCode, null, null);
             }
             catch (Exception) { throw; }
         }
 
-        public IActionResult RecoverPassword()
+        /// <summary>
+        /// Envia un correo para confirmar que se cambiara la conttraseña
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost("account/recoverpassword")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public IActionResult RecoverPassword(RecoverPassDto recoverDto)
         {
+            try
+            {
+                userConfiguration.RecoverPassword(recoverDto);
+                return Ok(new
+                {
+                    message = "Se ha enviado un mensaje de verificacion de identidad"
+                });
+            }
+            catch (BussinessException e)
+            {
+                return Problem(e.ReasonPhrase ?? e.Message, null, (int?)e.StatusCode, null, null);
+            }
+            catch (Exception) { throw; }
+        }
 
+
+        /// <summary>
+        /// Cambia las contraseña de un usuario previamente el email haya sido confirmado
+        /// </summary>
+        /// <param name="changePasswordDto"></param>
+        /// <returns></returns>
+        [HttpPost("account/changepassword")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public IActionResult ChangePassword(ChangePasswordDto changePasswordDto)
+        {
+            try
+            {
+                this.userConfiguration.ChangePassword(changePasswordDto);
+                return Ok(new
+                {
+                    message = "Contraseña actualizada con exito"
+                });
+            }
+            catch (BussinessException e)
+            {
+                return Problem(e.ReasonPhrase ?? e.Message, null, (int?)e.StatusCode, null, null);
+            }
+            catch (Exception) { throw; }
         }
         #endregion
     }

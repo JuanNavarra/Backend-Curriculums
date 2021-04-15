@@ -19,6 +19,8 @@
             CreateMap<CreateUserDto, UserDto>();
             CreateMap<Users, CreateUserDto>();
             CreateMap<CreateUserDto, Users>();
+            CreateMap<RecoverPassDto, ChangePasswordDto>();
+            CreateMap<ChangePasswordDto, RecoverPassDto>();
         }
         #endregion
     }

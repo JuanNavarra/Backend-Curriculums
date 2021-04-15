@@ -50,14 +50,15 @@
         }
 
         /// <summary>
-        /// Obtiene los datos del usuario creado y manda un email para
-        /// confirmar la cuenta
+        /// Obtiene los datos del usuario creado y manda un email
         /// </summary>
         /// <param name="user"></param>
-        private void SendConfirmation(Users user)
+        /// <param name="emailBody"></param>
+        /// <param name="path"></param>
+        private void SendSecuriyEmail(Users user, EmailBodyEnum emailBody, ActionProcessUserEnum actionProcess)
         {
             string linkConfirmation = $"{configuration["Addresses:Domain"]}api/User/account/" +
-                $"confirmemail/{user.UserName}/{WebUtility.UrlEncode(user.TokenConfirmation)}";
+                $"confirmemail/{user.UserName}/{WebUtility.UrlEncode(user.TokenConfirmation)}/{(int)actionProcess}";
             SendEMailDto mailDto = new SendEMailDto()
             {
                 Body = linkConfirmation,
@@ -66,7 +67,7 @@
                 EmailTo = user.Email,
                 Subject = "Confirm email to login"
             };
-            MessageSender.SendEmail(mailDto, EmailBodyEnum.confirmationEmail);
+            MessageSender.SendEmail(mailDto, emailBody);
         }
 
         /// <summary>
@@ -104,7 +105,7 @@
                         .WriteToken(Security.GenerateToken(userDto, apiAuth, TokenExpiresEnum.confirmation));
                     int userSaved = this.userRepository.CreateUser(user);
                     if (userSaved != 0)
-                        this.SendConfirmation(user);
+                        this.SendSecuriyEmail(user, EmailBodyEnum.confirmationEmail, ActionProcessUserEnum.login);
                     else
                         throw new BussinessException("No se pudo guardar el usuario");
                 }
@@ -129,7 +130,7 @@
                 Users credentials = this.userRepository.FindUser(user);
                 if (credentials is null)
                     throw new BussinessException(HttpStatusCode.Forbidden, "Error al ingresar las credenciales");
-                if (credentials.IsConfirmed)
+                if (!credentials.IsConfirmed)
                     throw new BussinessException(HttpStatusCode.Forbidden, "El email requiere confirmación");
                 string[] apiAuth = new string[]
                 {
@@ -137,6 +138,8 @@
                     configuration["ApiAuth:Audience"],
                     configuration["ApiAuth:SecretKey"]
                 };
+                credentials.LastLogin = DateTime.Now;
+                int updateLogin = this.userRepository.UpdateUser(credentials);
                 return new JwtSecurityTokenHandler().WriteToken(Security.GenerateToken(userDto, apiAuth, TokenExpiresEnum.login));
             }
             catch (BussinessException) { throw; }
@@ -144,11 +147,12 @@
         }
 
         /// <summary>
-        /// Confirma el email retornando un string de confirmacion
+        /// Confirma el email por la url de seguridad
         /// </summary>
         /// <param name="username"></param>
         /// <param name="token"></param>
-        public void ConfirmEmail(string username, string token)
+        /// <param name="actionEnum"></param>
+        public void ConfirmEmail(string username, string token, ActionProcessUserEnum actionEnum)
         {
             try
             {
@@ -177,11 +181,20 @@
                 if (user is null)
                     throw new BussinessException(HttpStatusCode.Forbidden, "Credenciales incorrectas");
 
-                if (user.IsConfirmed)
-                    throw new BussinessException("El email ya fue confirmado anteriormente");
-
-                user.IsConfirmed = true;
-                user.State = true;
+                switch (actionEnum)
+                {
+                    case ActionProcessUserEnum.login:
+                        if (user.IsConfirmed)
+                            throw new BussinessException("El email ya fue confirmado anteriormente");
+                        user.IsConfirmed = true;
+                        user.State = true;
+                        break;
+                    case ActionProcessUserEnum.recoverPass:
+                        user.IsConfirmedChange = true;
+                        break;
+                    default:
+                        break;
+                }
                 user.UpdateDate = DateTime.Now;
                 int userUpdated = this.userRepository.UpdateUser(user);
                 if (userUpdated == 0)
@@ -221,9 +234,87 @@
                     .WriteToken(Security.GenerateToken(userDto, apiAuth, TokenExpiresEnum.confirmation));
                 int userUpdated = this.userRepository.UpdateUser(user);
                 if (userUpdated != 0)
-                    this.SendConfirmation(user);
+                    this.SendSecuriyEmail(user, EmailBodyEnum.confirmationEmail, ActionProcessUserEnum.login);
                 else
                     throw new BussinessException("No se pudo reenviar el correo");
+            }
+            catch (BussinessException) { throw; }
+            catch (Exception) { throw; }
+        }
+
+        /// <summary>
+        /// Envia un correo para confirmar que se cambiara la conttraseña
+        /// </summary>
+        /// <param name="recoverDto"></param>
+        public void RecoverPassword(RecoverPassDto recoverDto)
+        {
+            try
+            {
+                if (recoverDto.Email is null || recoverDto.Username is null)
+                    throw new Exception("El objeto esta vacio");
+                Users user = this.userRepository.FindUserByUserNameEmail(recoverDto);
+                if (user is null)
+                    throw new BussinessException(HttpStatusCode.Forbidden, "Error al ingresar las credenciales");
+                if (!user.IsConfirmed)
+                    throw new BussinessException(HttpStatusCode.Forbidden, "El email no ha sido confirmado");
+                string[] apiAuth = new string[]
+                {
+                    configuration["ApiAuth:Issuer"],
+                    configuration["ApiAuth:Audience"],
+                    configuration["ApiAuth:SecretKey"]
+                };
+                UserDto userDto = mapper.Map<UserDto>(user);
+                user.TokenChangePassword = new JwtSecurityTokenHandler()
+                    .WriteToken(Security.GenerateToken(userDto, apiAuth, TokenExpiresEnum.confirmation));
+                int userUpdated = this.userRepository.UpdateUser(user);
+                if (userUpdated != 0)
+                    this.SendSecuriyEmail(user, EmailBodyEnum.recoverPassEmail, ActionProcessUserEnum.recoverPass);
+            }
+            catch (BussinessException) { throw; }
+            catch (Exception) { throw; }
+        }
+
+        /// <summary>
+        /// Cambia las contraseña de un usuario previamente el email haya sido confirmado
+        /// </summary>
+        /// <param name="changePasswordDto"></param>
+        public void ChangePassword(ChangePasswordDto changePasswordDto)
+        {
+            try
+            {
+                if (changePasswordDto is null)
+                    throw new Exception("El objeto esta vacio");
+
+                RecoverPassDto dto = mapper.Map<RecoverPassDto>(changePasswordDto);
+                Users user = this.userRepository.FindUserByUserNameEmail(dto);
+                if (user is null)
+                    throw new BussinessException(HttpStatusCode.Forbidden, "El usuario no existe");
+
+                string[] apiAuth = new string[]
+                {
+                    configuration["ApiAuth:Issuer"],
+                    configuration["ApiAuth:Audience"],
+                    configuration["ApiAuth:SecretKey"]
+                };
+                if (!user.IsConfirmed || !user.IsConfirmedChange)
+                    throw new BussinessException(HttpStatusCode.Forbidden, "Tiene que confirmar la cuenta primero");
+
+                if (!Security.ValidateCurrentToken(user.TokenChangePassword, apiAuth))
+                    throw new BussinessException(HttpStatusCode.Forbidden, "El token expiró");
+
+                if (!changePasswordDto.ConfirmPassword.Equals(changePasswordDto.Password))
+                    throw new BussinessException("Las contraseñas no coinciden, favor verificarlas");
+
+                if (this.ValidatePassword(changePasswordDto.Password))
+                    throw new BussinessException("La contraseña no es lo suficientemente fuerte");
+
+                user.IsConfirmedChange = false;
+                user.Password = changePasswordDto.Password;
+                user.TokenChangePassword = null;
+                user.UpdateDate = DateTime.Now;
+                int userUpdated = this.userRepository.UpdateUser(user);
+                if (userUpdated == 0)
+                    throw new BussinessException($"Error al confirmar el email");
             }
             catch (BussinessException) { throw; }
             catch (Exception) { throw; }
