@@ -199,6 +199,15 @@
                 int userUpdated = this.userRepository.UpdateUser(user);
                 if (userUpdated == 0)
                     throw new BussinessException($"Error al confirmar el email");
+                SendEMailDto mailDto = new SendEMailDto()
+                {
+                    Body = "Successful process",
+                    EmailFrom = configuration["MailCredentials:Email"],
+                    PasswordFrom = configuration["MailCredentials:Password"],
+                    EmailTo = user.Email,
+                    Subject = "Information process"
+                };
+                MessageSender.SendEmail(mailDto, EmailBodyEnum.successfulProcess);
             }
             catch (BussinessException) { throw; }
             catch (Exception) { throw; }

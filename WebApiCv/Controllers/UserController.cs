@@ -93,10 +93,7 @@
             try
             {
                 userConfiguration.ConfirmEmail(username, token, (ActionProcessUserEnum)actionProcess);
-                return Ok(new
-                {
-                    response = "Confirmacion de correo exitosa"
-                });
+                return NoContent();
             }
             catch (BussinessException e)
             {
