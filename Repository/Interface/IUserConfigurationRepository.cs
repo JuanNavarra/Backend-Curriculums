@@ -9,7 +9,6 @@
 
     public interface IUserConfigurationRepository
     {
-        Task<Users> prueba();
         /// <summary>
         /// Busca si existe el usuario con su contraseña
         /// </summary>
@@ -39,12 +38,18 @@
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        Users FindUserByUserNameTokenConfirm(ConfirmEmailDto user);
+        Users FindUserByUserNameTokenConfirm(UserTokenDto user);
         /// <summary>
         /// Encuentra el usuario por email o el nombre de usuario
         /// </summary>
         /// <param name="recoverDto"></param>
         /// <returns></returns>
         Users FindUserByUserNameEmail(RecoverPassDto recoverDto);
+        /// <summary>
+        /// Obtiene el usuario por el token de sesion y el nombre del usuario
+        /// </summary>
+        /// <param name="userTokenDto"></param>
+        /// <returns></returns>
+        Users FindUserByUsernameTokenLogIn(UserTokenDto userTokenDto);
     }
 }

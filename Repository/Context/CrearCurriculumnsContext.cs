@@ -62,6 +62,8 @@
 
                 entity.Property(e => e.IsConfirmedChange).HasColumnName("esconfirmadocambio");
 
+                entity.Property(e => e.TokenLogin).HasColumnName("tokensesion");
+
             });
 
             OnModelCreatingPartial(modelBuilder);

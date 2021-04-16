@@ -30,10 +30,6 @@
         }
         #endregion
         #region Methods
-        public async Task<Users> prueba()
-        {
-            return await this.userRepository.prueba();
-        }
 
         /// <summary>
         /// Valida si la contraseña tiene un formato correcto
@@ -139,8 +135,11 @@
                     configuration["ApiAuth:SecretKey"]
                 };
                 credentials.LastLogin = DateTime.Now;
+                credentials.TokenLogin = new JwtSecurityTokenHandler()
+                    .WriteToken(Security.GenerateToken(userDto, apiAuth, TokenExpiresEnum.login));
                 int updateLogin = this.userRepository.UpdateUser(credentials);
-                return new JwtSecurityTokenHandler().WriteToken(Security.GenerateToken(userDto, apiAuth, TokenExpiresEnum.login));
+
+                return credentials.TokenLogin;
             }
             catch (BussinessException) { throw; }
             catch (Exception) { throw; }
@@ -172,7 +171,7 @@
                 if (!Security.ValidateCurrentToken(token, apiAuth))
                     throw new BussinessException(HttpStatusCode.Forbidden, "Este token ya no expiró");
 
-                ConfirmEmailDto confirmDto = new ConfirmEmailDto()
+                UserTokenDto confirmDto = new UserTokenDto()
                 {
                     Token = token,
                     Username = username
@@ -188,6 +187,7 @@
                             throw new BussinessException("El email ya fue confirmado anteriormente");
                         user.IsConfirmed = true;
                         user.State = true;
+                        user.TokenConfirmation = null;
                         break;
                     case ActionProcessUserEnum.recoverPass:
                         user.IsConfirmedChange = true;
@@ -309,12 +309,44 @@
                     throw new BussinessException("La contraseña no es lo suficientemente fuerte");
 
                 user.IsConfirmedChange = false;
-                user.Password = changePasswordDto.Password;
+                user.Password = Security.Encrypt(changePasswordDto.Password, configuration["ApiAuth:ClaveIV"]);
                 user.TokenChangePassword = null;
                 user.UpdateDate = DateTime.Now;
                 int userUpdated = this.userRepository.UpdateUser(user);
                 if (userUpdated == 0)
                     throw new BussinessException($"Error al confirmar el email");
+            }
+            catch (BussinessException) { throw; }
+            catch (Exception) { throw; }
+        }
+
+        /// <summary>
+        /// Cerrar sesion
+        /// </summary>
+        /// <param name="userTokenDto"></param>
+        public void LogOut(UserTokenDto userTokenDto)
+        {
+            try
+            {
+                if (userTokenDto.Token is null || userTokenDto.Username is null)
+                    throw new BussinessException(HttpStatusCode.BadRequest, "Problemas al leer el token");
+                Users user = this.userRepository.FindUserByUsernameTokenLogIn(userTokenDto);
+                if (user is null)
+                    throw new BussinessException(HttpStatusCode.Forbidden, "El usuario no existe");
+                if (!user.IsConfirmed)
+                    throw new BussinessException(HttpStatusCode.Forbidden, "Este cuenta no ha sido confirmada");
+                string[] apiAuth = new string[]
+                {
+                    configuration["ApiAuth:Issuer"],
+                    configuration["ApiAuth:Audience"],
+                    configuration["ApiAuth:SecretKey"]
+                };
+                if (!Security.ValidateCurrentToken(user.TokenChangePassword, apiAuth))
+                    throw new BussinessException(HttpStatusCode.Forbidden, "El token expiró");
+                user.TokenLogin = null;
+                int userUpdated = this.userRepository.UpdateUser(user);
+                if (userUpdated == 0)
+                    throw new BussinessException($"Error al cerrar la sesion");
             }
             catch (BussinessException) { throw; }
             catch (Exception) { throw; }

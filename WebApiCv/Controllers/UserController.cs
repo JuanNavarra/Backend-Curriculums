@@ -24,17 +24,11 @@
         }
         #endregion
         #region Methods
-        [HttpGet("prueba")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Index()
-        {
-            var a = await userConfiguration.prueba();
-            return Ok(new
-            {
-                response = a
-            });
-        }
-
+        /// <summary>
+        /// Crea una nueva cuenta con las credenciales del usuario
+        /// </summary>
+        /// <param name="createUserDto"></param>
+        /// <returns></returns>
         [HttpPost("account/createusercredentials")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [AllowAnonymous]
@@ -56,7 +50,7 @@
         }
 
         /// <summary>
-        /// Retorna el token del usuario si se logeo correctamente
+        /// Retorna el token del usuario, si se logeo correctamente
         /// </summary>
         /// <param name="userDto"></param>
         /// <returns></returns>
@@ -64,14 +58,14 @@
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public IActionResult Login(UserDto userDto)
+        public IActionResult LogIn(UserDto userDto)
         {
             try
             {
                 string token = userConfiguration.LogIn(userDto);
                 return Ok(new
                 {
-                    response = token,
+                    token = token,
                     message = "Login exitoso"
                 });
             }
@@ -162,7 +156,6 @@
             catch (Exception) { throw; }
         }
 
-
         /// <summary>
         /// Cambia las contraseña de un usuario previamente el email haya sido confirmado
         /// </summary>
@@ -180,6 +173,32 @@
                 return Ok(new
                 {
                     message = "Contraseña actualizada con exito"
+                });
+            }
+            catch (BussinessException e)
+            {
+                return Problem(e.ReasonPhrase ?? e.Message, null, (int?)e.StatusCode, null, null);
+            }
+            catch (Exception) { throw; }
+        }
+
+        /// <summary>
+        /// Cerrar sesion
+        /// </summary>
+        /// <returns></returns>
+        [Authorize]
+        [HttpPost("account/logout")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public IActionResult LogOut(UserTokenDto userTokenDto)
+        {
+            try
+            {
+                this.userConfiguration.LogOut(userTokenDto);
+                return Ok(new
+                {
+                    message = "Sesion cerrada correctamente"
                 });
             }
             catch (BussinessException e)

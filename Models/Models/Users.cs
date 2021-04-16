@@ -17,5 +17,6 @@
         public DateTime? UpdateDate { get; set; }
         public string TokenChangePassword { get; set; }
         public bool IsConfirmedChange { get; set; }
+        public string TokenLogin { get; set; }
     }
 }

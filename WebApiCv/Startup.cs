@@ -12,6 +12,8 @@ using Microsoft.OpenApi.Models;
 using Repository;
 using Services;
 using System;
+using System.IO;
+using System.Reflection;
 using System.Text;
 
 namespace WebApiCv
@@ -85,6 +87,10 @@ namespace WebApiCv
                         Url = new Uri("https://www.linkedin.com/in/juan-carlos-navarra-guzm%C3%A1n-31512896/")
                     }
                 });
+
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                s.IncludeXmlComments(xmlPath);
 
                 s.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {

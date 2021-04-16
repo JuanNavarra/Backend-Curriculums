@@ -37,7 +37,7 @@
                     dtDateExpirationToken = new DateTime(now.Year, now.Month, now.Day, 23, 59, 59, 999);
                     break;
                 case TokenExpiresEnum.confirmation:
-                    dtDateExpirationToken = DateTime.Now.AddMinutes(10);
+                    dtDateExpirationToken = now.AddMinutes(25);
                     break;
                 default:
                     break;

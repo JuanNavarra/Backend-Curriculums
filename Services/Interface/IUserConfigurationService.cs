@@ -9,7 +9,6 @@
 
     public interface IUserConfigurationService
     {
-        Task<Users> prueba();
         /// <summary>
         /// Genera el token para logearse
         /// </summary>
@@ -43,5 +42,10 @@
         /// </summary>
         /// <param name="changePasswordDto"></param>
         void ChangePassword(ChangePasswordDto changePasswordDto);
+        /// <summary>
+        /// Cerrar sesion
+        /// </summary>
+        /// <param name="userTokenDto"></param>
+        void LogOut(UserTokenDto userTokenDto);
     }
 }

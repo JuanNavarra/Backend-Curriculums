@@ -20,11 +20,6 @@
         }
         #endregion
         #region Methods
-        public async Task<Users> prueba()
-        {
-            var a = await this.repository.FindAsync<Users>(1);
-            return a;
-        }
 
         /// <summary>
         /// Busca si existe el usuario con su contraseña
@@ -37,7 +32,7 @@
             {
                 return this.repository.
                     GetOneData<Users>(
-                        g => g.UserName == users.UserName && 
+                        g => g.UserName == users.UserName &&
                         g.Password == users.Password
                     );
             }
@@ -82,10 +77,10 @@
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public Users FindUserByUserNameTokenConfirm(ConfirmEmailDto user)
+        public Users FindUserByUserNameTokenConfirm(UserTokenDto user)
         {
             return this.repository.GetOneData<Users>(
-                g => g.TokenConfirmation.Equals(user.Token) && 
+                g => g.TokenConfirmation.Equals(user.Token) &&
                 g.UserName.Equals(user.Username));
         }
 
@@ -99,6 +94,17 @@
             return this.repository.GetOneData<Users>(
                 g => g.Email.Equals(recoverDto.Email) ||
                 g.UserName.Equals(recoverDto.Username));
+        }
+        
+        /// <summary>
+        /// Obtiene el usuario por el token de sesion y el nombre del usuario
+        /// </summary>
+        /// <param name="userTokenDto"></param>
+        /// <returns></returns>
+        public Users FindUserByUsernameTokenLogIn(UserTokenDto userTokenDto)
+        {
+            return this.repository.GetOneData<Users>(g => g.TokenLogin.Equals(userTokenDto.Token)
+                && g.UserName.Equals(userTokenDto.Username));
         }
         #endregion
     }

@@ -26,6 +26,9 @@
     <ProjectReference Include="..\Dtos\Dtos.csproj" />
     <ProjectReference Include="..\Services\Services.csproj" />
   </ItemGroup>
-
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+	</PropertyGroup>
 
 </Project>
